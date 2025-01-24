@@ -24,8 +24,10 @@
 	],
 	"main": "js/electron.js",
 	"scripts": {
-		"start": "DISPLAY=\"${DISPLAY:=:0}\" ./node_modules/.bin/electron js/electron.js",
-		"start:dev": "DISPLAY=\"${DISPLAY:=:0}\" ./node_modules/.bin/electron js/electron.js dev",
+		"start": "node ./node_modules/cross-env/dist/bin/cross-env.js DISPLAY=:0 electron js/electron.js",
+		"start:windows": "electron js/electron.js",
+		"start:dev": "node ./node_modules/cross-env/dist/bin/cross-env.js DISPLAY=:0 electron js/electron.js dev",
+		"start:dev:windows": "electron js/electron.js dev",
 		"server": "node ./serveronly",
 		"install-mm": "npm install --no-audit --no-fund --no-update-notifier --only=prod --omit=dev",
 		"install-mm:dev": "npm install --no-audit --no-fund --no-update-notifier",
@@ -72,7 +74,8 @@
 		"pm2": "^5.4.2",
 		"socket.io": "^4.8.0",
 		"suncalc": "^1.9.0",
-		"systeminformation": "^5.23.5"
+		"systeminformation": "^5.23.5",
+		"cross-env": "^7.0.3"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.11.1",
