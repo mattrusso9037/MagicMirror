@@ -1,5 +1,5 @@
 /* global CalendarUtils */
-
+// https://github.com/randomBrainstormer/MMM-GoogleCalendar Google Calendar Module
 Module.register("calendar", {
 	// Define module defaults
 	defaults: {
