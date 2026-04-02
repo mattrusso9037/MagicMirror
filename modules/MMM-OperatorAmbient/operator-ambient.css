@@ -1,0 +1,357 @@
+.MMM-OperatorAmbient {
+  width: 100%;
+}
+
+.MMM-OperatorAmbient .oa-root {
+  --oa-bg: #06080b;
+  --oa-surface: rgba(255, 255, 255, 0.05);
+  --oa-border: rgba(255, 255, 255, 0.12);
+  --oa-text: #e8eef2;
+  --oa-muted: rgba(232, 238, 242, 0.68);
+  --oa-accent: #ee6c4d;
+  --oa-accent-dim: rgba(238, 108, 77, 0.18);
+  --oa-ink: #292a38;
+  --oa-drift-x: 0;
+  --oa-drift-y: 0;
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  color: var(--oa-text);
+  pointer-events: none;
+}
+
+.MMM-OperatorAmbient .oa-shell {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 360px);
+  grid-template-rows: auto 1fr auto;
+  gap: 28px;
+  min-height: 100vh;
+  padding: 38px 42px 138px;
+  background: radial-gradient(circle at 18% 18%, rgba(238, 108, 77, 0.1), transparent 28%), radial-gradient(circle at 82% 12%, rgba(255, 255, 255, 0.06), transparent 24%), linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0));
+  transform: translate(var(--oa-drift-x), var(--oa-drift-y));
+  transition: transform 1200ms ease;
+  box-sizing: border-box;
+}
+
+.MMM-OperatorAmbient .oa-root::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(6, 8, 11, 0.2), rgba(6, 8, 11, 0.65)), repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.012), rgba(255, 255, 255, 0.012) 1px, transparent 1px, transparent 3px);
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.MMM-OperatorAmbient .oa-clock-panel,
+.MMM-OperatorAmbient .oa-weather-card,
+.MMM-OperatorAmbient .oa-quote-panel,
+.MMM-OperatorAmbient .oa-events-panel,
+.MMM-OperatorAmbient .oa-status-row {
+  position: relative;
+  z-index: 1;
+}
+
+.MMM-OperatorAmbient .oa-clock-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.MMM-OperatorAmbient .oa-eyebrow,
+.MMM-OperatorAmbient .oa-panel-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--oa-muted);
+}
+
+.MMM-OperatorAmbient .oa-clock-time {
+  font-size: clamp(4.8rem, 10vw, 8rem);
+  line-height: 0.92;
+  letter-spacing: -0.06em;
+  color: var(--oa-text);
+  text-shadow: 0 10px 40px rgba(0, 0, 0, 0.38);
+}
+
+.MMM-OperatorAmbient .oa-clock-date {
+  font-size: 1.18rem;
+  color: var(--oa-muted);
+  letter-spacing: 0.02em;
+}
+
+.MMM-OperatorAmbient .oa-chip {
+  display: inline-flex;
+  align-self: flex-start;
+  margin-top: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--oa-border);
+  border-radius: 999px;
+  font-size: 0.9rem;
+  color: var(--oa-text);
+  background: var(--oa-surface);
+}
+
+.MMM-OperatorAmbient .oa-chip--urgent,
+.MMM-OperatorAmbient .oa-chip--focus {
+  border-color: rgba(238, 108, 77, 0.4);
+  background: var(--oa-accent-dim);
+}
+
+.MMM-OperatorAmbient .oa-chip--calm,
+.MMM-OperatorAmbient .oa-chip--neutral {
+  color: var(--oa-muted);
+}
+
+.MMM-OperatorAmbient .oa-weather-card,
+.MMM-OperatorAmbient .oa-events-panel,
+.MMM-OperatorAmbient .oa-quote-panel {
+  border: 1px solid var(--oa-border);
+  border-radius: 26px;
+  background: var(--oa-surface);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.24);
+}
+
+.MMM-OperatorAmbient .oa-weather-card {
+  padding: 22px 22px 18px;
+}
+
+.MMM-OperatorAmbient .oa-weather-location {
+  font-size: 1.05rem;
+  color: var(--oa-text);
+}
+
+.MMM-OperatorAmbient .oa-weather-empty {
+  margin-top: 14px;
+  color: var(--oa-muted);
+}
+
+.MMM-OperatorAmbient .oa-weather-periods {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.MMM-OperatorAmbient .oa-weather-period {
+  padding: 14px 12px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  text-align: left;
+}
+
+.MMM-OperatorAmbient .oa-weather-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--oa-muted);
+}
+
+.MMM-OperatorAmbient .oa-weather-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.MMM-OperatorAmbient .oa-weather-icon {
+  font-size: 1.6rem;
+  color: var(--oa-accent);
+}
+
+.MMM-OperatorAmbient .oa-weather-temp {
+  font-size: 1.5rem;
+  color: var(--oa-text);
+}
+
+.MMM-OperatorAmbient .oa-weather-condition,
+.MMM-OperatorAmbient .oa-weather-rain {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: var(--oa-muted);
+}
+
+.MMM-OperatorAmbient .oa-quote-panel {
+  grid-column: 1 / 2;
+  padding: 28px 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.MMM-OperatorAmbient .oa-quote-copy {
+  animation: oa-quote-fade 450ms ease;
+}
+
+.MMM-OperatorAmbient .oa-quote-text {
+  margin: 14px 0 0;
+  font-size: clamp(1.8rem, 3.5vw, 2.85rem);
+  line-height: 1.18;
+  color: var(--oa-text);
+  max-width: 18ch;
+}
+
+.MMM-OperatorAmbient .oa-quote-meta {
+  margin-top: 18px;
+  font-size: 0.95rem;
+  color: var(--oa-muted);
+  letter-spacing: 0.04em;
+}
+
+.MMM-OperatorAmbient .oa-quote-tag {
+  margin-left: 10px;
+  padding-left: 10px;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.7rem;
+}
+
+.MMM-OperatorAmbient .oa-events-panel {
+  grid-column: 2 / 3;
+  grid-row: 2 / 4;
+  padding: 24px 24px 22px;
+}
+
+.MMM-OperatorAmbient .oa-calendar-state {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.MMM-OperatorAmbient .oa-calendar-state--setup {
+  color: var(--oa-muted);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.MMM-OperatorAmbient .oa-calendar-state--error {
+  color: #ffd5cb;
+  background: rgba(238, 108, 77, 0.18);
+}
+
+.MMM-OperatorAmbient .oa-event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.MMM-OperatorAmbient .oa-event-item {
+  display: grid;
+  grid-template-columns: 98px minmax(0, 1fr);
+  gap: 14px;
+  padding: 14px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.MMM-OperatorAmbient .oa-event-item:first-child {
+  border-top: 0;
+  padding-top: 4px;
+}
+
+.MMM-OperatorAmbient .oa-event-time {
+  font-size: 0.78rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--oa-muted);
+}
+
+.MMM-OperatorAmbient .oa-event-title {
+  font-size: 1rem;
+  line-height: 1.35;
+  color: var(--oa-text);
+}
+
+.MMM-OperatorAmbient .oa-event-location {
+  margin-top: 6px;
+  font-size: 0.82rem;
+  color: var(--oa-muted);
+}
+
+.MMM-OperatorAmbient .oa-events-empty {
+  margin-top: 20px;
+  font-size: 0.95rem;
+  color: var(--oa-muted);
+}
+
+.MMM-OperatorAmbient .oa-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-self: end;
+}
+
+.MMM-OperatorAmbient .oa-status-pill {
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.MMM-OperatorAmbient .oa-status-pill--ok {
+  color: var(--oa-text);
+}
+
+.MMM-OperatorAmbient .oa-status-pill--neutral {
+  color: var(--oa-muted);
+}
+
+.MMM-OperatorAmbient .oa-status-pill--warning {
+  color: #ffd5cb;
+  border-color: rgba(238, 108, 77, 0.28);
+  background: rgba(238, 108, 77, 0.12);
+}
+
+.MMM-OperatorAmbient .oa-dim-layer {
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 8, 11, 0.3);
+  opacity: 0;
+  transition: opacity 500ms ease;
+  pointer-events: none;
+}
+
+.MMM-OperatorAmbient .oa-root--sleeping .oa-dim-layer {
+  opacity: 1;
+}
+
+@keyframes oa-quote-fade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 980px) {
+  .MMM-OperatorAmbient .oa-shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto auto;
+    padding-right: 26px;
+    padding-left: 26px;
+  }
+
+  .MMM-OperatorAmbient .oa-quote-panel,
+  .MMM-OperatorAmbient .oa-events-panel {
+    grid-column: 1 / 2;
+    grid-row: auto;
+  }
+
+  .MMM-OperatorAmbient .oa-weather-periods {
+    grid-template-columns: 1fr;
+  }
+}
