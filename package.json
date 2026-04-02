@@ -24,9 +24,9 @@
 	],
 	"main": "js/electron.js",
 	"scripts": {
-		"start": "node ./node_modules/cross-env/dist/bin/cross-env.js DISPLAY=:0 electron js/electron.js",
+		"start": "cross-env DISPLAY=:0 electron js/electron.js",
 		"start:windows": "electron js/electron.js",
-		"start:dev": "node ./node_modules/cross-env/dist/bin/cross-env.js DISPLAY=:0 electron js/electron.js dev",
+		"start:dev": "cross-env DISPLAY=:0 electron js/electron.js dev",
 		"start:dev:windows": "electron js/electron.js dev",
 		"server": "node ./serveronly",
 		"install-mm": "npm install --no-audit --no-fund --no-update-notifier --only=prod --omit=dev",
