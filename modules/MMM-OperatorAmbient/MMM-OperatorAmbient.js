@@ -166,8 +166,7 @@ Module.register("MMM-OperatorAmbient", {
 		const quote = this.getCurrentQuote();
 		const chip = this.getCalendarChip(snapshot?.calendar, now);
 		const sceneTone = this.getSceneTone(now);
-		const agendaTitle = this.getAgendaTitle(snapshot?.calendar);
-		const agendaCount = this.getAgendaCountLabel(snapshot?.calendar);
+		const timeParts = this.getTimeDisplayParts(now, this.config.showSeconds);
 
 		wrapper.id = `${this.identifier}_ambient`;
 		wrapper.className = `oa-root oa-root--${sceneTone}${this.isSleeping(now) ? " oa-root--sleeping" : ""}`;
@@ -182,44 +181,38 @@ Module.register("MMM-OperatorAmbient", {
 					<div class="oa-orb oa-orb--tertiary"></div>
 					<div class="oa-grid-glow"></div>
 				</div>
-				<section class="oa-hero">
-					<div class="oa-hero-topline">
-						<div class="oa-hero-copy">
-							<div class="oa-eyebrow">${escapeHtml(this.getDayPhaseLabel(now))}</div>
-							<div class="oa-hero-title">Operator Ambient</div>
-						</div>
-						<div class="oa-chip oa-chip--${chip.tone}">${escapeHtml(chip.label)}</div>
+				<div class="oa-clear-zone" aria-hidden="true"></div>
+				<header class="oa-topbar">
+					<div class="oa-brand-lockup">
+						<div class="oa-brand-eyebrow">${escapeHtml(this.getDayPhaseLabel(now))}</div>
+						<div class="oa-brand-name">Operator Ambient</div>
 					</div>
-					<div class="oa-clock-time">${escapeHtml(this.formatTime(now, this.config.showSeconds))}</div>
-					<div class="oa-clock-date">${escapeHtml(this.formatDate(now))}</div>
-					<p class="oa-hero-summary">${escapeHtml(this.getHeroSummary(snapshot, now))}</p>
-					<div class="oa-stat-row">
-						${this.renderHeroStats(snapshot?.calendar, snapshot?.weather)}
-					</div>
-				</section>
-				<div class="oa-insights">
-					<section class="oa-weather-card">
-						${this.renderWeather(snapshot?.weather)}
+					<div class="oa-chip oa-chip--${chip.tone}">${escapeHtml(chip.label)}</div>
+				</header>
+				<main class="oa-layout">
+					<section class="oa-main-row">
+						<section class="oa-time-block">
+							<div class="oa-clock-time">
+								${escapeHtml(timeParts.main)}
+								${timeParts.dayPeriod ? `<span class="oa-clock-period">${escapeHtml(timeParts.dayPeriod)}</span>` : ""}
+							</div>
+							<div class="oa-clock-date">${escapeHtml(this.formatDate(now))}</div>
+							<p class="oa-hero-summary">${escapeHtml(this.getHeroSummary(snapshot, now))}</p>
+						</section>
+						<aside class="oa-weather-rail">
+							${this.renderWeatherRail(snapshot?.weather)}
+						</aside>
 					</section>
-					<section class="oa-quote-panel">
-						<div class="oa-panel-label">Reflection</div>
-						${this.renderQuote(quote)}
+					<section class="oa-bottom-row">
+						<section class="oa-upcoming-rail">
+							${this.renderUpcomingRail(snapshot?.calendar, snapshot?.status, now)}
+						</section>
+						<footer class="oa-brief-column">
+							${this.renderBriefRail(snapshot, now)}
+							${this.renderQuote(quote)}
+						</footer>
 					</section>
-				</div>
-				<aside class="oa-agenda-panel">
-					<div class="oa-agenda-header">
-						<div>
-							<div class="oa-panel-label">Agenda</div>
-							<div class="oa-agenda-title">${escapeHtml(agendaTitle)}</div>
-						</div>
-						<div class="oa-agenda-count">${escapeHtml(agendaCount)}</div>
-					</div>
-					${this.renderCalendarState(snapshot?.status)}
-					${this.renderEvents(snapshot?.calendar, now)}
-					<div class="oa-status-row">
-						${this.renderStatus(snapshot?.status)}
-					</div>
-				</aside>
+				</main>
 			</div>
 			<div class="oa-dim-layer"></div>
 		`;
@@ -320,179 +313,173 @@ Module.register("MMM-OperatorAmbient", {
 		return `${visibleCount} ahead`;
 	},
 
-	renderHeroStats (calendar, weather) {
-		const currentWeather = weather?.periods?.[0] || null;
-		const nextMeeting = calendar?.nextMeetingStartsAt ? new Date(calendar.nextMeetingStartsAt) : null;
-		const focusValue = calendar?.nextFreeWindowMinutes
-			? this.formatDuration(calendar.nextFreeWindowMinutes)
-			: (calendar?.todayEventCount || 0) === 0
-				? "All day"
-				: nextMeeting
-					? "Booked"
-					: "Open";
-		const focusNote = calendar?.nextFreeWindowMinutes && nextMeeting
-			? `before ${this.formatTime(nextMeeting, false)}`
-			: nextMeeting
-				? `next at ${this.formatTime(nextMeeting, false)}`
-				: "calendar is quiet";
-		const meetingsCount = calendar?.todayEventCount || 0;
-		const meetingsValue = meetingsCount ? String(meetingsCount) : "None";
-		const meetingsNote = meetingsCount === 1 ? "meeting today" : "meetings today";
-		const weatherValue = currentWeather?.temperatureF === null || currentWeather?.temperatureF === undefined
-			? "--"
-			: `${currentWeather.temperatureF}°`;
-		const weatherNote = currentWeather?.condition || "weather syncing";
-		const stats = [
-			{
-				label: "Open window",
-				value: focusValue,
-				note: focusNote
-			},
-			{
-				label: "Meetings",
-				value: meetingsValue,
-				note: meetingsNote
-			},
-			{
-				label: "Conditions",
-				value: weatherValue,
-				note: weatherNote
-			}
-		];
+	getTimeDisplayParts (date, showSeconds) {
+		const formatter = new Intl.DateTimeFormat(config.locale || "en-US", {
+			hour: "numeric",
+			minute: "2-digit",
+			second: showSeconds ? "2-digit" : undefined,
+			hour12: this.config.timeFormat !== 24
+		});
+		const parts = formatter.formatToParts(date);
+		const dayPeriod = parts.find((part) => part.type === "dayPeriod")?.value || "";
+		const main = parts
+			.filter((part) => part.type !== "dayPeriod")
+			.map((part) => part.value)
+			.join("")
+			.replaceAll(/\s+/g, " ")
+			.trim();
 
-		return stats.map((stat) => `
-			<div class="oa-stat-card">
-				<div class="oa-stat-label">${escapeHtml(stat.label)}</div>
-				<div class="oa-stat-value">${escapeHtml(stat.value)}</div>
-				<div class="oa-stat-note">${escapeHtml(stat.note)}</div>
-			</div>
-		`).join("");
+		return {
+			main,
+			dayPeriod
+		};
 	},
 
-	renderQuote (quote) {
-		if (!quote) {
-			return `
-				<div class="oa-quote-copy">
-					<div class="oa-quote-mark" aria-hidden="true">“</div>
-					<p class="oa-quote-text">Loading quiet signals for the day.</p>
-					<div class="oa-quote-meta">Ambient system</div>
-				</div>
-			`;
+	getAgendaSummary (calendar, now) {
+		const total = calendar?.todayEventCount || 0;
+		const visible = calendar?.events?.length || 0;
+		const nextMeeting = calendar?.nextMeetingStartsAt ? new Date(calendar.nextMeetingStartsAt) : null;
+
+		if (!total) {
+			return "Nothing scheduled. The mirror stays in ambient mode all day.";
 		}
 
-		return `
-			<div class="oa-quote-copy">
-				<div class="oa-quote-mark" aria-hidden="true">“</div>
-				<p class="oa-quote-text">${escapeHtml(quote.text)}</p>
-				<div class="oa-quote-meta">${escapeHtml(quote.author)}${quote.tag ? ` <span class="oa-quote-tag">${escapeHtml(quote.tag)}</span>` : ""}</div>
-			</div>
-		`;
+		if (nextMeeting) {
+			const minutesUntil = Math.max(0, Math.ceil((nextMeeting.getTime() - now.getTime()) / 60000));
+			if (minutesUntil <= 30) {
+				return `A meeting starts in ${minutesUntil} minutes. Keep the next move close.`;
+			}
+
+			if (calendar?.nextFreeWindowMinutes) {
+				return `${this.formatDuration(calendar.nextFreeWindowMinutes)} of open time remains before ${this.formatTime(nextMeeting, false)}.`;
+			}
+		}
+
+		if (visible < total) {
+			return `${visible} upcoming items are shown here, with ${total} total scheduled today.`;
+		}
+
+		return total === 1 ? "One commitment shapes the day." : `${total} commitments are spaced across the day.`;
 	},
 
-	renderWeather (weather) {
+	renderWeatherRail (weather) {
 		if (!weather?.periods?.length) {
 			return `
-				<div class="oa-weather-head">
-					<div>
-						<div class="oa-panel-label">Forecast</div>
-						<div class="oa-weather-location">${escapeHtml(this.config.weather.label)}</div>
-					</div>
-				</div>
-				<div class="oa-weather-empty">
-					<div class="oa-weather-empty-copy">Weather unavailable</div>
-					<div class="oa-weather-empty-note">The mirror will refresh the local forecast when a feed is available.</div>
-				</div>
+				<div class="oa-section-label">Forecast</div>
+				<div class="oa-weather-location">${escapeHtml(this.config.weather.label)}</div>
+				<div class="oa-weather-empty-note">Weather will appear here when the local feed is available.</div>
 			`;
 		}
 
-		const [currentPeriod, ...futurePeriods] = weather.periods;
-		const rainLabel = currentPeriod?.rainChance === null ? "Rain --" : `Rain ${currentPeriod.rainChance}%`;
-
 		return `
-			<div class="oa-weather-head">
-				<div>
-					<div class="oa-panel-label">Forecast</div>
-					<div class="oa-weather-location">${escapeHtml(weather.location)}</div>
-				</div>
-				<div class="oa-weather-badge">${escapeHtml(rainLabel)}</div>
-			</div>
-			<div class="oa-weather-feature">
-				<div class="oa-weather-icon-wrap">
-					<span class="wi oa-weather-icon wi-${escapeHtml(currentPeriod.iconClass || "na")}"></span>
-				</div>
-				<div class="oa-weather-feature-copy">
-					<div class="oa-weather-label">${escapeHtml(currentPeriod.label)}</div>
-					<div class="oa-weather-temp">${currentPeriod.temperatureF === null ? "--" : escapeHtml(`${currentPeriod.temperatureF}°`)}</div>
-					<div class="oa-weather-condition">${escapeHtml(currentPeriod.condition)}</div>
-				</div>
-			</div>
-			${futurePeriods.length ? `
-				<div class="oa-weather-periods">
-					${futurePeriods.map((period) => `
-						<div class="oa-weather-period">
-							<div class="oa-weather-period-top">
-								<div class="oa-weather-label">${escapeHtml(period.label)}</div>
-								<span class="wi oa-weather-mini-icon wi-${escapeHtml(period.iconClass || "na")}"></span>
-							</div>
-							<div class="oa-weather-mini-temp">${period.temperatureF === null ? "--" : escapeHtml(`${period.temperatureF}°`)}</div>
-							<div class="oa-weather-rain">${period.rainChance === null ? "Rain --" : escapeHtml(`Rain ${period.rainChance}%`)}</div>
-						</div>
-					`).join("")}
-				</div>
-			` : ""}
-		`;
-	},
-
-	renderCalendarState (status) {
-		if (!status || status.calendarAuthState === "ready") {
-			return "";
-		}
-
-		const tone = status.calendarAuthState === "error" ? "error" : "setup";
-		return `<div class="oa-calendar-state oa-calendar-state--${tone}">${escapeHtml(status.calendarAuthMessage || "Calendar attention required.")}</div>`;
-	},
-
-	renderEvents (calendar, now) {
-		if (!calendar?.events?.length) {
-			return `<div class="oa-events-empty">${calendar?.todayEventCount ? "No more timed meetings today." : "No meetings scheduled today."}</div>`;
-		}
-
-		return `
-			<ul class="oa-event-list">
-				${calendar.events.map((event) => `
-					<li class="oa-event-item">
-						<div class="oa-event-time">${escapeHtml(this.formatEventTime(event, now))}</div>
-						<div class="oa-event-body">
-							<div class="oa-event-title">${escapeHtml(event.title)}</div>
-							${event.location ? `<div class="oa-event-location">${escapeHtml(event.location)}</div>` : ""}
-						</div>
+			<div class="oa-section-label">Next 3 Hours</div>
+			<div class="oa-weather-location">${escapeHtml(weather.location)}</div>
+			<ul class="oa-weather-list">
+				${weather.periods.slice(0, 3).map((period) => `
+					<li class="oa-weather-row">
+						<div class="oa-weather-time">${escapeHtml(period.label)}</div>
+						<span class="wi oa-weather-icon wi-${escapeHtml(period.iconClass || "na")}" aria-hidden="true"></span>
+						<div class="oa-weather-temp">${period.temperatureF === null ? "--" : escapeHtml(`${period.temperatureF}°`)}</div>
 					</li>
 				`).join("")}
 			</ul>
 		`;
 	},
 
-	renderStatus (status) {
-		if (!status) {
+	renderUpcomingRail (calendar, status, now) {
+		const event = this.getPrimaryEvent(calendar, now);
+		if (event) {
 			return `
-				<div class="oa-status-pill oa-status-pill--neutral">Calendar syncing</div>
-				<div class="oa-status-pill oa-status-pill--neutral">Weather syncing</div>
+				<div class="oa-section-label">Upcoming</div>
+				<div class="oa-upcoming-block">
+					<div class="oa-upcoming-title">${escapeHtml(event.title)}</div>
+					<div class="oa-upcoming-meta">${escapeHtml(this.formatUpcomingMeta(event, now))}</div>
+				</div>
 			`;
 		}
 
-		const pills = [
-			this.getStatusPill("Calendar", status.lastCalendarSyncAt, status.calendarStale, status.calendarAuthState !== "ready"),
-			this.getStatusPill("Weather", status.lastWeatherSyncAt, status.weatherStale, false)
-		];
-
-		if (status.isOffline) {
-			pills.push({
-				label: "Offline cache mode",
-				tone: "warning"
-			});
+		if (status?.calendarAuthState !== "ready") {
+			return `
+				<div class="oa-section-label">Calendar</div>
+				<div class="oa-upcoming-block">
+					<div class="oa-upcoming-title">Setup needed</div>
+					<div class="oa-upcoming-meta">${escapeHtml(this.getCalendarAttentionSummary(status))}</div>
+				</div>
+			`;
 		}
 
-		return pills.map((pill) => `<div class="oa-status-pill oa-status-pill--${pill.tone}">${escapeHtml(pill.label)}</div>`).join("");
+		return `
+			<div class="oa-section-label">Upcoming</div>
+			<div class="oa-upcoming-block">
+				<div class="oa-upcoming-title">Open day</div>
+				<div class="oa-upcoming-meta">No timed meetings are holding the middle of the day.</div>
+			</div>
+		`;
+	},
+
+	renderBriefRail (snapshot, now) {
+		return `
+			<section class="oa-brief-section">
+				<div class="oa-section-label">Today</div>
+				<div class="oa-brief-title">${escapeHtml(this.getAgendaTitle(snapshot?.calendar))}</div>
+				<div class="oa-brief-copy">${escapeHtml(this.getAgendaSummary(snapshot?.calendar, now))}</div>
+			</section>
+		`;
+	},
+
+	renderQuote (quote) {
+		if (!quote) {
+			return `
+				<section class="oa-quote-section">
+					<div class="oa-section-label">Reflection</div>
+					<p class="oa-quote-text">Loading quiet signals for the day.</p>
+					<div class="oa-quote-meta">Ambient system</div>
+				</section>
+			`;
+		}
+
+		return `
+			<section class="oa-quote-section">
+				<div class="oa-section-label">Reflection</div>
+				<p class="oa-quote-text">${escapeHtml(quote.text)}</p>
+				<div class="oa-quote-meta">${escapeHtml(quote.author)}${quote.tag ? ` <span class="oa-quote-tag">${escapeHtml(quote.tag)}</span>` : ""}</div>
+			</section>
+		`;
+	},
+
+	getCalendarAttentionSummary (status) {
+		const message = status?.calendarAuthMessage || "";
+		if (message.includes("OAuth client ID")) {
+			return "Add a Google OAuth client ID in the module config.";
+		}
+
+		if (message.includes("/MMM-OperatorAmbient/auth/start")) {
+			return "Open the local auth route on the Pi to connect Google Calendar.";
+		}
+
+		return "Calendar attention required before events can appear here.";
+	},
+
+	getPrimaryEvent (calendar, now) {
+		const events = calendar?.events || [];
+		const futureEvent = events.find((event) => {
+			if (event.isAllDay) {
+				return true;
+			}
+
+			return new Date(event.endAt || event.startAt).getTime() > now.getTime();
+		});
+
+		return futureEvent || null;
+	},
+
+	formatUpcomingMeta (event, now) {
+		const timeLabel = this.formatEventTime(event, now);
+		if (event.location) {
+			return `${timeLabel} — ${event.location}`;
+		}
+
+		return timeLabel;
 	},
 
 	getStatusPill (name, timestamp, isStale, needsAttention) {
