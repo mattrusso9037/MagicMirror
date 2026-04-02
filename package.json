@@ -45,6 +45,8 @@
 		"test:calendar": "node ./modules/default/calendar/debug.js",
 		"test:spelling": "cspell . --gitignore",
 		"config:check": "node js/check_config.js",
+		"refresh": "node ./scripts/refresh-google-token.js",
+		"write-token": "node ./scripts/write-google-token.js",
 		"lint:prettier": "prettier . --write",
 		"lint:js": "eslint . --fix",
 		"lint:css": "stylelint 'css/main.css' 'fonts/*.css' 'modules/default/**/*.css' 'vendor/*.css' --config .stylelintrc.json --fix",

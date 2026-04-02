@@ -56,6 +56,43 @@ The module stores runtime state in `config/MMM-OperatorAmbient/`:
 
 Delete `google-token.json` and revisit the local auth route if you need to reconnect Google Calendar.
 
+## Local Token Helper
+
+If signing in directly on the Pi is inconvenient, you can generate the same token file locally and copy it to the Pi:
+
+```bash
+npm run refresh -- --cid=YOUR_GOOGLE_CLIENT_ID --secret=YOUR_GOOGLE_CLIENT_SECRET
+```
+
+The helper also accepts the shorter npm-config form:
+
+```bash
+npm run refresh --cid=YOUR_GOOGLE_CLIENT_ID --secret=YOUR_GOOGLE_CLIENT_SECRET
+```
+
+Optional flags:
+
+- `--out=/absolute/path/google-token.json`
+- `--no-open`
+
+By default the helper writes the token file on the machine where you run the command at:
+
+- `tmp/MMM-OperatorAmbient-google-token.json`
+
+The script now prints the resolved output path before it opens Google so you can verify where it will land. Copy that file to:
+
+- `config/MMM-OperatorAmbient/google-token.json`
+
+If you already have a refresh token and just want to create the Pi-side file directly over SSH, run this from the MagicMirror repo on the Pi:
+
+```bash
+npm run write-token -- --refresh-token='YOUR_REFRESH_TOKEN' --email='you@example.com'
+```
+
+That writes the file directly to:
+
+- `config/MMM-OperatorAmbient/google-token.json`
+
 ## Manual Calendar Setup
 
 1. Create or reuse a Google Cloud project.
