@@ -165,35 +165,61 @@ Module.register("MMM-OperatorAmbient", {
 		const drift = this.driftOffsets[this.driftIndex] || this.driftOffsets[0];
 		const quote = this.getCurrentQuote();
 		const chip = this.getCalendarChip(snapshot?.calendar, now);
+		const sceneTone = this.getSceneTone(now);
+		const agendaTitle = this.getAgendaTitle(snapshot?.calendar);
+		const agendaCount = this.getAgendaCountLabel(snapshot?.calendar);
 
 		wrapper.id = `${this.identifier}_ambient`;
-		wrapper.className = `oa-root${this.isSleeping(now) ? " oa-root--sleeping" : ""}`;
+		wrapper.className = `oa-root oa-root--${sceneTone}${this.isSleeping(now) ? " oa-root--sleeping" : ""}`;
 		wrapper.style.setProperty("--oa-accent", this.config.accentColor);
 		wrapper.style.setProperty("--oa-drift-x", `${drift.x}px`);
 		wrapper.style.setProperty("--oa-drift-y", `${drift.y}px`);
 		wrapper.innerHTML = `
 			<div class="oa-shell">
-				<section class="oa-clock-panel">
-					<div class="oa-eyebrow">Operator Ambient</div>
+				<div class="oa-atmosphere" aria-hidden="true">
+					<div class="oa-orb oa-orb--primary"></div>
+					<div class="oa-orb oa-orb--secondary"></div>
+					<div class="oa-orb oa-orb--tertiary"></div>
+					<div class="oa-grid-glow"></div>
+				</div>
+				<section class="oa-hero">
+					<div class="oa-hero-topline">
+						<div class="oa-hero-copy">
+							<div class="oa-eyebrow">${escapeHtml(this.getDayPhaseLabel(now))}</div>
+							<div class="oa-hero-title">Operator Ambient</div>
+						</div>
+						<div class="oa-chip oa-chip--${chip.tone}">${escapeHtml(chip.label)}</div>
+					</div>
 					<div class="oa-clock-time">${escapeHtml(this.formatTime(now, this.config.showSeconds))}</div>
 					<div class="oa-clock-date">${escapeHtml(this.formatDate(now))}</div>
-					<div class="oa-chip oa-chip--${chip.tone}">${escapeHtml(chip.label)}</div>
+					<p class="oa-hero-summary">${escapeHtml(this.getHeroSummary(snapshot, now))}</p>
+					<div class="oa-stat-row">
+						${this.renderHeroStats(snapshot?.calendar, snapshot?.weather)}
+					</div>
 				</section>
-				<section class="oa-weather-card">
-					${this.renderWeather(snapshot?.weather)}
-				</section>
-				<section class="oa-quote-panel">
-					<div class="oa-panel-label">Quote</div>
-					${this.renderQuote(quote)}
-				</section>
-				<aside class="oa-events-panel">
-					<div class="oa-panel-label">Calendar</div>
+				<div class="oa-insights">
+					<section class="oa-weather-card">
+						${this.renderWeather(snapshot?.weather)}
+					</section>
+					<section class="oa-quote-panel">
+						<div class="oa-panel-label">Reflection</div>
+						${this.renderQuote(quote)}
+					</section>
+				</div>
+				<aside class="oa-agenda-panel">
+					<div class="oa-agenda-header">
+						<div>
+							<div class="oa-panel-label">Agenda</div>
+							<div class="oa-agenda-title">${escapeHtml(agendaTitle)}</div>
+						</div>
+						<div class="oa-agenda-count">${escapeHtml(agendaCount)}</div>
+					</div>
 					${this.renderCalendarState(snapshot?.status)}
 					${this.renderEvents(snapshot?.calendar, now)}
+					<div class="oa-status-row">
+						${this.renderStatus(snapshot?.status)}
+					</div>
 				</aside>
-				<div class="oa-status-row">
-					${this.renderStatus(snapshot?.status)}
-				</div>
 			</div>
 			<div class="oa-dim-layer"></div>
 		`;
@@ -205,10 +231,149 @@ Module.register("MMM-OperatorAmbient", {
 		return this.snapshot?.quotes?.items?.[this.currentQuoteIndex] || null;
 	},
 
+	getSceneTone (date) {
+		const hour = date.getHours();
+
+		if (hour >= 5 && hour < 11) {
+			return "morning";
+		}
+
+		if (hour >= 11 && hour < 17) {
+			return "day";
+		}
+
+		if (hour >= 17 && hour < 21) {
+			return "evening";
+		}
+
+		return "night";
+	},
+
+	getDayPhaseLabel (date) {
+		const tone = this.getSceneTone(date);
+
+		if (tone === "morning") {
+			return "Morning brief";
+		}
+
+		if (tone === "day") {
+			return "Daylight focus";
+		}
+
+		if (tone === "evening") {
+			return "Evening reset";
+		}
+
+		return "Night watch";
+	},
+
+	getHeroSummary (snapshot, now) {
+		const calendar = snapshot?.calendar;
+		const currentWeather = snapshot?.weather?.periods?.[0];
+		const condition = currentWeather?.condition;
+		const nextMeeting = calendar?.nextMeetingStartsAt ? new Date(calendar.nextMeetingStartsAt) : null;
+
+		if (calendar?.nextFreeWindowMinutes && nextMeeting) {
+			return `${condition ? `${condition}. ` : ""}${this.formatDuration(calendar.nextFreeWindowMinutes)} of open focus time before ${this.formatTime(nextMeeting, false)}.`;
+		}
+
+		if (nextMeeting) {
+			return `${condition ? `${condition}. ` : ""}Next conversation starts at ${this.formatTime(nextMeeting, false)}.`;
+		}
+
+		if ((calendar?.todayEventCount || 0) === 0) {
+			return condition ? `${condition}. The schedule is open and quiet.` : "The schedule is open and quiet.";
+		}
+
+		if (calendar?.events?.length) {
+			return `${condition ? `${condition}. ` : ""}${calendar.events.length} moments remain on the board today.`;
+		}
+
+		return `${this.getDayPhaseLabel(now)} with a calm signal and room to think.`;
+	},
+
+	getAgendaTitle (calendar) {
+		const count = calendar?.todayEventCount || 0;
+
+		if (count === 0) {
+			return "An open day";
+		}
+
+		if (count === 1) {
+			return "One event shapes today";
+		}
+
+		return `${count} events shape today`;
+	},
+
+	getAgendaCountLabel (calendar) {
+		const visibleCount = calendar?.events?.length || 0;
+
+		if (visibleCount === 0) {
+			return "Clear";
+		}
+
+		if (visibleCount === 1) {
+			return "1 ahead";
+		}
+
+		return `${visibleCount} ahead`;
+	},
+
+	renderHeroStats (calendar, weather) {
+		const currentWeather = weather?.periods?.[0] || null;
+		const nextMeeting = calendar?.nextMeetingStartsAt ? new Date(calendar.nextMeetingStartsAt) : null;
+		const focusValue = calendar?.nextFreeWindowMinutes
+			? this.formatDuration(calendar.nextFreeWindowMinutes)
+			: (calendar?.todayEventCount || 0) === 0
+				? "All day"
+				: nextMeeting
+					? "Booked"
+					: "Open";
+		const focusNote = calendar?.nextFreeWindowMinutes && nextMeeting
+			? `before ${this.formatTime(nextMeeting, false)}`
+			: nextMeeting
+				? `next at ${this.formatTime(nextMeeting, false)}`
+				: "calendar is quiet";
+		const meetingsCount = calendar?.todayEventCount || 0;
+		const meetingsValue = meetingsCount ? String(meetingsCount) : "None";
+		const meetingsNote = meetingsCount === 1 ? "meeting today" : "meetings today";
+		const weatherValue = currentWeather?.temperatureF === null || currentWeather?.temperatureF === undefined
+			? "--"
+			: `${currentWeather.temperatureF}°`;
+		const weatherNote = currentWeather?.condition || "weather syncing";
+		const stats = [
+			{
+				label: "Open window",
+				value: focusValue,
+				note: focusNote
+			},
+			{
+				label: "Meetings",
+				value: meetingsValue,
+				note: meetingsNote
+			},
+			{
+				label: "Conditions",
+				value: weatherValue,
+				note: weatherNote
+			}
+		];
+
+		return stats.map((stat) => `
+			<div class="oa-stat-card">
+				<div class="oa-stat-label">${escapeHtml(stat.label)}</div>
+				<div class="oa-stat-value">${escapeHtml(stat.value)}</div>
+				<div class="oa-stat-note">${escapeHtml(stat.note)}</div>
+			</div>
+		`).join("");
+	},
+
 	renderQuote (quote) {
 		if (!quote) {
 			return `
 				<div class="oa-quote-copy">
+					<div class="oa-quote-mark" aria-hidden="true">“</div>
 					<p class="oa-quote-text">Loading quiet signals for the day.</p>
 					<div class="oa-quote-meta">Ambient system</div>
 				</div>
@@ -217,7 +382,8 @@ Module.register("MMM-OperatorAmbient", {
 
 		return `
 			<div class="oa-quote-copy">
-				<p class="oa-quote-text">“${escapeHtml(quote.text)}”</p>
+				<div class="oa-quote-mark" aria-hidden="true">“</div>
+				<p class="oa-quote-text">${escapeHtml(quote.text)}</p>
 				<div class="oa-quote-meta">${escapeHtml(quote.author)}${quote.tag ? ` <span class="oa-quote-tag">${escapeHtml(quote.tag)}</span>` : ""}</div>
 			</div>
 		`;
@@ -226,30 +392,54 @@ Module.register("MMM-OperatorAmbient", {
 	renderWeather (weather) {
 		if (!weather?.periods?.length) {
 			return `
-				<div class="oa-weather-header">
-					<div class="oa-weather-location">${escapeHtml(this.config.weather.label)}</div>
-					<div class="oa-weather-empty">Weather unavailable</div>
+				<div class="oa-weather-head">
+					<div>
+						<div class="oa-panel-label">Forecast</div>
+						<div class="oa-weather-location">${escapeHtml(this.config.weather.label)}</div>
+					</div>
+				</div>
+				<div class="oa-weather-empty">
+					<div class="oa-weather-empty-copy">Weather unavailable</div>
+					<div class="oa-weather-empty-note">The mirror will refresh the local forecast when a feed is available.</div>
 				</div>
 			`;
 		}
 
+		const [currentPeriod, ...futurePeriods] = weather.periods;
+		const rainLabel = currentPeriod?.rainChance === null ? "Rain --" : `Rain ${currentPeriod.rainChance}%`;
+
 		return `
-			<div class="oa-weather-header">
-				<div class="oa-weather-location">${escapeHtml(weather.location)}</div>
+			<div class="oa-weather-head">
+				<div>
+					<div class="oa-panel-label">Forecast</div>
+					<div class="oa-weather-location">${escapeHtml(weather.location)}</div>
+				</div>
+				<div class="oa-weather-badge">${escapeHtml(rainLabel)}</div>
 			</div>
-			<div class="oa-weather-periods">
-				${weather.periods.map((period) => `
-					<div class="oa-weather-period">
-						<div class="oa-weather-label">${escapeHtml(period.label)}</div>
-						<div class="oa-weather-main">
-							<span class="wi oa-weather-icon wi-${escapeHtml(period.iconClass || "na")}"></span>
-							<span class="oa-weather-temp">${period.temperatureF === null ? "--" : escapeHtml(`${period.temperatureF}°`)}</span>
+			<div class="oa-weather-feature">
+				<div class="oa-weather-icon-wrap">
+					<span class="wi oa-weather-icon wi-${escapeHtml(currentPeriod.iconClass || "na")}"></span>
+				</div>
+				<div class="oa-weather-feature-copy">
+					<div class="oa-weather-label">${escapeHtml(currentPeriod.label)}</div>
+					<div class="oa-weather-temp">${currentPeriod.temperatureF === null ? "--" : escapeHtml(`${currentPeriod.temperatureF}°`)}</div>
+					<div class="oa-weather-condition">${escapeHtml(currentPeriod.condition)}</div>
+				</div>
+			</div>
+			${futurePeriods.length ? `
+				<div class="oa-weather-periods">
+					${futurePeriods.map((period) => `
+						<div class="oa-weather-period">
+							<div class="oa-weather-period-top">
+								<div class="oa-weather-label">${escapeHtml(period.label)}</div>
+								<span class="wi oa-weather-mini-icon wi-${escapeHtml(period.iconClass || "na")}"></span>
+							</div>
+							<div class="oa-weather-mini-temp">${period.temperatureF === null ? "--" : escapeHtml(`${period.temperatureF}°`)}</div>
+							<div class="oa-weather-rain">${period.rainChance === null ? "Rain --" : escapeHtml(`Rain ${period.rainChance}%`)}</div>
 						</div>
-						<div class="oa-weather-condition">${escapeHtml(period.condition)}</div>
-						<div class="oa-weather-rain">${period.rainChance === null ? "Rain --" : escapeHtml(`Rain ${period.rainChance}%`)}</div>
-					</div>
-				`).join("")}
-			</div>
+					`).join("")}
+				</div>
+			` : ""}
 		`;
 	},
 
